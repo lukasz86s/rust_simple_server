@@ -1,4 +1,4 @@
-
+#[derive(Debug)]
 pub enum Method{
     GET,
     DELETE,
@@ -10,3 +10,5 @@ pub enum Method{
     TRACE,
     PATCH,
 }
+
+
