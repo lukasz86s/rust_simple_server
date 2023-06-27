@@ -1,4 +1,5 @@
-use super::method::Method;
+use crate::http::method;
+use super::method::{Method, MethodError};
 use std::convert::TryFrom;
 use std::fmt::{Result as FmtResult, Formatter, Display, Debug};
 use std::error::Error;
@@ -21,18 +22,27 @@ impl TryFrom<&[u8]> for Request{
        if protocol != "HTTP/1.1"{
         return Err(ParseError::InvalidProtocol);
        }
+       let method:Method = method.parse()?;
        unimplemented!();
     }
 
 }
-
+//*old function */
+// fn get_next_word(request: &str) -> Option<(&str, &str)>{
+//     for (i, c) in request.chars().enumerate(){
+//         if c == ' ' || c == '\r'{
+//             return Some((&request[..i], &request[i + 1..]));
+//         }
+//     }
+//     None
+// }
 fn get_next_word(request: &str) -> Option<(&str, &str)>{
-    for (i, c) in request.chars().enumerate(){
-        if c == ' ' || c == '\r'{
-            return Some((&request[..i], &request[i + 1..]));
-        }
+    match request.find(|c| c==' ' || c=='\r'){
+        Some(idx) =>{
+            Some((&request[..idx], &request[idx +1..]))
+        },
+        None => None,
     }
-    None
 }
 
 pub enum ParseError{
@@ -44,6 +54,11 @@ pub enum ParseError{
 impl From<Utf8Error> for ParseError{
     fn from(_ : Utf8Error) -> Self{
         Self::InvalidEncoding
+    }
+}
+impl From<MethodError> for ParseError{
+    fn from(_: MethodError) -> Self{
+        Self::InvalidMethod
     }
 }
 impl ParseError{
