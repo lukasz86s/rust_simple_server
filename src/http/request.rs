@@ -4,28 +4,51 @@ use std::convert::TryFrom;
 use std::fmt::{Result as FmtResult, Formatter, Display, Debug};
 use std::error::Error;
 use std::str::{self, Utf8Error};
+//use std::cmp::PartialEq;
 // use std::convert::From;
-pub struct Request{
-    path: String,
-    query_string: Option<String>,
+#[derive(Debug)]
+pub struct Request<'buf>{
+    path: &'buf str,
+    query_string: Option<&'buf str>,
     method: Method,
 }
 
 
-impl TryFrom<&[u8]> for Request{
+impl<'buf> TryFrom<&'buf [u8]> for Request<'buf>{
     type Error = ParseError;
-    fn try_from(buf: &[u8]) -> Result<Self, Self::Error> {
+    fn try_from(buf: &'buf [u8]) -> Result<Request<'buf>, Self::Error> {
        let request = str::from_utf8(buf)?;
        let (method, request) = get_next_word(request).ok_or(ParseError::InvalidEncoding)?;
-       let (path, request) = get_next_word(request).ok_or(ParseError::InvalidEncoding)?;
+       let (mut path, request) = get_next_word(request).ok_or(ParseError::InvalidEncoding)?;
        let (protocol, _) = get_next_word(request).ok_or(ParseError::InvalidEncoding)?;
        if protocol != "HTTP/1.1"{
         return Err(ParseError::InvalidProtocol);
        }
+       
        let method:Method = method.parse()?;
-       unimplemented!();
+       let mut query_strin = None;
+       
+       if let Some(i) = path.find('?'){
+            query_strin = Some(&path[i + 1..]);
+            path = &path[..i];
+           
+       }
+       Ok(Self{
+            path: path,
+            query_string: query_strin,
+            method: method,
+        })
+       
     }
 
+}
+
+impl<'buf> PartialEq for Request<'buf>{
+    fn eq(&self, other: &Self) -> bool{
+        self.path == other.path &&
+        self.query_string.unwrap() == other.query_string.unwrap() &&
+        self.method.to_string() == other.method.to_string()
+    }
 }
 //*old function */
 // fn get_next_word(request: &str) -> Option<(&str, &str)>{
@@ -95,11 +118,12 @@ fn get_next_word_test(){
     assert_eq!(get_next_word(&text[..]).unwrap(), (&text[..5], &text[6..] ));
     assert_eq!(get_next_word(&text[10..]), None);
 }
-//figure how to start separated function
+
 #[test]
 fn get_next_word_print_test(){
     let st = "GET /search?name=abc&sort=1 HTTP/1.1\r\n...HEADERS...".to_string();
     let mut text= st.as_str();
+    
     loop{
         match get_next_word(text){
             Some((w, t)) => {
@@ -109,4 +133,11 @@ fn get_next_word_print_test(){
             None => break, 
        }
     }
+}
+#[test]
+fn test_try_from(){
+    let st = "GET /search?name=abc&sort=1 HTTP/1.1\r\n...HEADERS...".to_string();
+    let buf = st.as_bytes();
+    assert_eq!(Request::try_from(buf).unwrap(), Request{path:"/search", query_string:Some("name=abc&sort=1"), method:Method::GET});
+    
 }
