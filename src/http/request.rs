@@ -50,6 +50,7 @@ impl<'buf> PartialEq for Request<'buf>{
         self.method.to_string() == other.method.to_string()
     }
 }
+//TODO: remove and cleane code 
 //*old function */
 // fn get_next_word(request: &str) -> Option<(&str, &str)>{
 //     for (i, c) in request.chars().enumerate(){
@@ -112,13 +113,14 @@ impl Error for ParseError {
 }
 
 // tests 
+
 #[test]
 fn get_next_word_test(){
     let text = String::from("jeden dwa trzy");
     assert_eq!(get_next_word(&text[..]).unwrap(), (&text[..5], &text[6..] ));
     assert_eq!(get_next_word(&text[10..]), None);
 }
-
+// TODO: remove or change this test
 #[test]
 fn get_next_word_print_test(){
     let st = "GET /search?name=abc&sort=1 HTTP/1.1\r\n...HEADERS...".to_string();
