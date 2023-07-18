@@ -1,5 +1,7 @@
 use crate::http::method;
+use super::QueryString;
 use super::method::{Method, MethodError};
+use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fmt::{Result as FmtResult, Formatter, Display, Debug};
 use std::error::Error;
@@ -9,7 +11,7 @@ use std::str::{self, Utf8Error};
 #[derive(Debug)]
 pub struct Request<'buf>{
     path: &'buf str,
-    query_string: Option<&'buf str>,
+    query_string: Option<QueryString<'buf>>,//Option<&'buf str>,
     method: Method,
 }
 
@@ -29,10 +31,11 @@ impl<'buf> TryFrom<&'buf [u8]> for Request<'buf>{
        let mut query_strin = None;
        
        if let Some(i) = path.find('?'){
-            query_strin = Some(&path[i + 1..]);
+            query_strin = Some(QueryString::from(&path[i + 1..]));
             path = &path[..i];
            
        }
+       
        Ok(Self{
             path: path,
             query_string: query_strin,
@@ -46,7 +49,7 @@ impl<'buf> TryFrom<&'buf [u8]> for Request<'buf>{
 impl<'buf> PartialEq for Request<'buf>{
     fn eq(&self, other: &Self) -> bool{
         self.path == other.path &&
-        self.query_string.unwrap() == other.query_string.unwrap() &&
+        self.query_string.as_ref().unwrap().query_map == other.query_string.as_ref().unwrap().query_map &&
         self.method.to_string() == other.method.to_string()
     }
 }
@@ -140,6 +143,10 @@ fn get_next_word_print_test(){
 fn test_try_from(){
     let st = "GET /search?name=abc&sort=1 HTTP/1.1\r\n...HEADERS...".to_string();
     let buf = st.as_bytes();
-    assert_eq!(Request::try_from(buf).unwrap(), Request{path:"/search", query_string:Some("name=abc&sort=1"), method:Method::GET});
+    let map = HashMap::from([
+                        ("name", Value::Single("abc")),
+                        ("sort", Value::Single("1")),
+    ]);
+    assert_eq!(Request::try_from(buf).unwrap(), Request{path:"/search", query_string:Some(QueryString { query_map: map }), method:Method::GET});
     
 }
