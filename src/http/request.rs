@@ -1,6 +1,7 @@
 use crate::http::method;
-use super::QueryString;
+use super::{QueryString, Value as QueryValue};
 use super::method::{Method, MethodError};
+
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fmt::{Result as FmtResult, Formatter, Display, Debug};
@@ -144,8 +145,8 @@ fn test_try_from(){
     let st = "GET /search?name=abc&sort=1 HTTP/1.1\r\n...HEADERS...".to_string();
     let buf = st.as_bytes();
     let map = HashMap::from([
-                        ("name", Value::Single("abc")),
-                        ("sort", Value::Single("1")),
+                        ("name", QueryValue::Single("abc")),
+                        ("sort", QueryValue::Single("1")),
     ]);
     assert_eq!(Request::try_from(buf).unwrap(), Request{path:"/search", query_string:Some(QueryString { query_map: map }), method:Method::GET});
     
