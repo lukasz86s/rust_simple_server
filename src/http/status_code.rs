@@ -17,7 +17,22 @@ impl StatusCode{
 }
 impl Display for StatusCode{
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult{
-        write!(f,"Status: {}", *self as u16)
+        write!(f,"{}", *self as u16)
     }
+
+}
+
+#[test]
+fn test_status_code(){
+    let mut status = StatusCode::Ok;
+    
+    assert_eq!("Ok", status.reason_phrase());
+
+    status = StatusCode::BadRequest;
+    assert_eq!("Bad Request", status.reason_phrase());
+
+    status = StatusCode::NotFound;
+    assert_eq!("Not Found", status.reason_phrase());
+
 
 }

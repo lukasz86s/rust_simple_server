@@ -1,4 +1,4 @@
-use std::{str::FromStr, string::ToString, string::ParseError};
+use std::{str::FromStr, string::ToString};
 //#[derive(Debug)]
 #[derive(Debug)]
 pub enum Method{
